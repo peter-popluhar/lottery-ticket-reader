@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import CameraCapture from './CameraCapture';
 
 interface LotteryData {
   date: string;
@@ -45,9 +46,13 @@ function App() {
 
       const data: LotteryData = await response.json();
       setExtractedData(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error uploading or processing image:', err);
-      setError(`Failed to extract data: ${err.message}`);
+      let message = 'Unknown error';
+      if (err instanceof Error) {
+        message = err.message;
+      }
+      setError(`Failed to extract data: ${message}`);
     } finally {
       setLoading(false);
     }
@@ -56,6 +61,7 @@ function App() {
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h1>Lottery Ticket Extractor</h1>
+      <CameraCapture />
       <input type="file" accept="image/*" onChange={handleFileChange} />
       <button onClick={handleUpload} disabled={!selectedFile || loading}>
         {loading ? 'Extracting...' : 'Extract Numbers'}
