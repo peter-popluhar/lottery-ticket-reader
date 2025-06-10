@@ -1,43 +1,46 @@
-const express = require('express');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const multer = require('multer');
-const cors = require('cors');
-require('dotenv').config(); // Load environment variables
+import express, { Request, Response } from 'express';
+import { GoogleGenerativeAI, GenerativeModel, GenerateContentResult } from '@google/generative-ai';
+import multer, { Multer, memoryStorage } from 'multer';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config(); // Load environment variables
 
 const app = express();
 const port = 3001; // Or any available port
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Use gemini-1.5-flash for image understanding
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const model: GenerativeModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Use gemini-1.5-flash for image understanding
 
-const upload = multer({ storage: multer.memoryStorage() }); // Store image in memory
+const upload: Multer = multer({ storage: memoryStorage() }); // Store image in memory
 
 app.use(cors()); // Enable CORS for local development
 
-app.post('/extract-lottery-data', upload.single('lotteryImage'), async (req, res) => {
+app.post('/extract-lottery-data', upload.single('lotteryImage'), async (req: Request, res: Response): Promise<void> => {
     try {
         if (!req.file) {
-            return res.status(400).send('No image file uploaded.');
+            res.status(400).send('No image file uploaded.');
+            return;
         }
 
-        const imageBuffer = req.file.buffer;
-        const mimeType = req.file.mimetype;
+        const imageBuffer: Buffer = req.file.buffer;
+        const mimeType: string = req.file.mimetype;
 
-        const base64Image = imageBuffer.toString('base64');
+        const base64Image: string = imageBuffer.toString('base64');
 
-        const result = await model.generateContent([
+        const result: GenerateContentResult = await model.generateContent([
             {
                 inlineData: {
                     data: base64Image,
                     mimeType: mimeType,
                 },
             },
-            "Extract the winning numbers, date, and Sance number from this lottery ticket. Format the output as a JSON object with 'date', 'sanceNumber', and 'winningNumbers' (an array of strings, where each string represents a row of numbers like '05 21 32 36 38 46 NT').",
+            "Extract the winning numbers, date, and Sance number from this lottery ticket. Format the output as a JSON object with 'date' (date after string 'POCET SLOSOVANI'), 'sanceNumber' (number after string 'Sance' in a same row, like '089229' with no colons or semicolons), and 'winningNumbers' (an array of strings, where each string represents a row of numbers like '05 21 32 36 38 46 NT').",
         ]);
 
-        const responseText = result.response.text();
+        const responseText: string = result.response.text();
 
-        let jsonString = responseText;
+        let jsonString: string = responseText;
 
         // Check if the response is wrapped in Markdown code blocks
         if (jsonString.startsWith('```json') && jsonString.endsWith('```')) {
@@ -49,8 +52,6 @@ app.post('/extract-lottery-data', upload.single('lotteryImage'), async (req, res
         }
 
         // Attempt to parse the response as JSON.
-        // Gemini is good at following instructions, but you might need more robust parsing
-        // or error handling depending on the exact output format.
         try {
             const parsedData = JSON.parse(jsonString); // Use the cleaned string here
             res.json(parsedData);
