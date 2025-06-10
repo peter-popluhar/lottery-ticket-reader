@@ -16,6 +16,28 @@ const upload: Multer = multer({ storage: memoryStorage() }); // Store image in m
 
 app.use(cors()); // Enable CORS for local development
 
+// Try to extract JSON from a code block or from anywhere in the text
+function extractJsonFromText(text: string): any {
+    // Try to find a ```json ... ``` code block
+    const codeBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/i);
+    if (codeBlockMatch) {
+        return JSON.parse(codeBlockMatch[1]);
+    }
+    // Try to find a generic ``` ... ``` code block
+    const genericBlockMatch = text.match(/```[\s\S]*?```/);
+    if (genericBlockMatch) {
+        // Remove the backticks and parse
+        const inner = genericBlockMatch[0].replace(/```[a-z]*\n?/i, '').replace(/```$/, '').trim();
+        return JSON.parse(inner);
+    }
+    // Fallback: find the first JSON object in the text
+    const jsonMatch = text.match(/{[\s\S]*}/);
+    if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+    }
+    throw new Error('No JSON found in response');
+}
+
 app.post('/extract-lottery-data', upload.single('lotteryImage'), async (req: Request, res: Response): Promise<void> => {
     try {
         if (!req.file) {
@@ -40,24 +62,12 @@ app.post('/extract-lottery-data', upload.single('lotteryImage'), async (req: Req
 
         const responseText: string = result.response.text();
 
-        let jsonString: string = responseText;
-
-        // Check if the response is wrapped in Markdown code blocks
-        if (jsonString.startsWith('```json') && jsonString.endsWith('```')) {
-            // Remove the '```json' at the start and '```' at the end
-            jsonString = jsonString.substring(7, jsonString.length - 3).trim();
-        } else if (jsonString.startsWith('```') && jsonString.endsWith('```')) {
-            // Handle generic code blocks if 'json' isn't always specified
-            jsonString = jsonString.substring(3, jsonString.length - 3).trim();
-        }
-
         // Attempt to parse the response as JSON.
         try {
-            const parsedData = JSON.parse(jsonString); // Use the cleaned string here
+            const parsedData = extractJsonFromText(responseText);
             res.json(parsedData);
         } catch (jsonError) {
-            console.error("Failed to parse Gemini response as JSON. Raw response (cleaned):", jsonString);
-            console.error("Original raw response:", responseText); // Log original for debugging
+            console.error("Failed to parse Gemini response as JSON. Raw response (cleaned):", responseText);
             res.status(500).json({ error: "Could not parse data from AI. Raw response: " + responseText });
         }
 

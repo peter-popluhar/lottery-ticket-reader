@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 
 interface CameraCaptureProps {
   onCapture: (file: File) => void;
+  loading: boolean
 }
 
 const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture }) => {
