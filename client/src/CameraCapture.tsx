@@ -6,11 +6,12 @@ const CameraCapture: React.FC = () => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
 
-  const startCamera = async () => {
+  const startCamera = async (mode: 'environment' | 'user' = facingMode) => {
     setError(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setStreaming(true);
@@ -27,6 +28,13 @@ const CameraCapture: React.FC = () => {
       videoRef.current.srcObject = null;
       setStreaming(false);
     }
+  };
+
+  const toggleCamera = async () => {
+    const newMode = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(newMode);
+    stopCamera();
+    await startCamera(newMode);
   };
 
   const captureImage = () => {
@@ -47,17 +55,22 @@ const CameraCapture: React.FC = () => {
   return (
     <div style={{ padding: '16px', border: '1px solid #ccc', borderRadius: '8px', maxWidth: 400 }}>
       <h2>Camera Capture</h2>
-      {!streaming ? (
-        <button onClick={startCamera} style={{ marginBottom: '10px' }}>Start Camera</button>
-      ) : (
-        <button onClick={stopCamera} style={{ marginBottom: '10px' }}>Stop Camera</button>
-      )}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+        {!streaming ? (
+          <button onClick={() => startCamera()} style={{ flex: 1 }}>Start Camera</button>
+        ) : (
+          <button onClick={stopCamera} style={{ flex: 1 }}>Stop Camera</button>
+        )}
+        <button onClick={toggleCamera} style={{ flex: 1 }} disabled={streaming}>
+          Switch to {facingMode === 'environment' ? 'Front' : 'Rear'} Camera
+        </button>
+      </div>
       <div style={{ marginBottom: '10px' }}>
         <video ref={videoRef} autoPlay playsInline style={{ width: '100%', display: streaming ? 'block' : 'none', borderRadius: '8px' }} />
         <canvas ref={canvasRef} style={{ display: 'none' }} />
       </div>
       {streaming && (
-        <button onClick={captureImage} style={{ marginBottom: '10px' }}>Capture Photo</button>
+        <button onClick={captureImage} style={{ marginBottom: '10px', width: '100%' }}>Capture Photo</button>
       )}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {capturedImage && (
