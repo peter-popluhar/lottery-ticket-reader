@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import CameraCapture from './CameraCapture';
 
 interface LotteryData {
@@ -13,17 +13,15 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
-      setExtractedData(null); // Clear previous results
-      setError(null);
-    }
+  const handleCapture = (file: File) => {
+    setSelectedFile(file);
+    setExtractedData(null); // Clear previous results
+    setError(null);
   };
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      setError('Please select an image file.');
+      setError('Please capture an image.');
       return;
     }
 
@@ -61,8 +59,7 @@ function App() {
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h1>Lottery Ticket Extractor</h1>
-      <CameraCapture />
-      <input type="file" accept="image/*" onChange={handleFileChange} />
+      <CameraCapture onCapture={handleCapture} />
       <button onClick={handleUpload} disabled={!selectedFile || loading}>
         {loading ? 'Extracting...' : 'Extract Numbers'}
       </button>

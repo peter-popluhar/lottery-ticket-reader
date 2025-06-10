@@ -1,9 +1,12 @@
 import React, { useRef, useState } from 'react';
 
-const CameraCapture: React.FC = () => {
+interface CameraCaptureProps {
+  onCapture: (file: File) => void;
+}
+
+const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
@@ -46,7 +49,12 @@ const CameraCapture: React.FC = () => {
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        setCapturedImage(canvas.toDataURL('image/png'));
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], 'captured.png', { type: 'image/png' });
+            onCapture(file);
+          }
+        }, 'image/png');
       }
     }
     stopCamera();
@@ -73,12 +81,6 @@ const CameraCapture: React.FC = () => {
         <button onClick={captureImage} style={{ marginBottom: '10px', width: '100%' }}>Capture Photo</button>
       )}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {capturedImage && (
-        <div style={{ marginTop: '10px' }}>
-          <h3>Captured Image:</h3>
-          <img src={capturedImage} alt="Captured" style={{ width: '100%', borderRadius: '8px' }} />
-        </div>
-      )}
     </div>
   );
 };
