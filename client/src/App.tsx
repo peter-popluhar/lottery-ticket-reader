@@ -7,11 +7,15 @@ interface LotteryData {
   winningNumbers: string[];
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
 function App() {
   const [extractedData, setExtractedData] = useState<LotteryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCamera, setShowCamera] = useState(true);
+
+  
 
   const handleCapture = (file: File) => {
     setExtractedData(null); // Clear previous results
@@ -23,12 +27,14 @@ function App() {
   const handleUpload = async (file: File) => {
     setLoading(true);
     setError(null);
+    setExtractedData(null);
+    setShowCamera(false); // Hide camera while processing/results
 
     const formData = new FormData();
     formData.append('lotteryImage', file);
 
     try {
-      const response = await fetch('http://localhost:3001/extract-lottery-data', {
+      const response = await fetch(`${API_BASE_URL}/api/extract-lottery-data`, {
         method: 'POST',
         body: formData,
       });
@@ -84,6 +90,7 @@ function App() {
         </>
       )}
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+      {loading && <div style={{textAlign: 'center', margin: '1em'}}>Loading...</div>}
     </div>
   );
 }
