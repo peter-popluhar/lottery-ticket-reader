@@ -5,6 +5,8 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 import * as admin from 'firebase-admin';
 
+const prompt = "Extract the winning numbers, date, and Šance number from this lottery ticket. Format the output as a JSON object with 'date' (date is after string 'POCET SLOSOVÁNÍ'), 'sanceNumber' (number after string 'Šance' in a same row, like '089229' with no colons or semicolons), and 'winningNumbers' (an array of strings, where each string represents a row of numbers like '05 21 32 36 38 46 NT'). If there is no lottery ticekt, dont return numbers used in this prompt as an examples."
+
 // Load environment variables
 if (!process.env.GEMINI_API_KEY) {
   dotenv.config();
@@ -72,9 +74,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const idToken = authorization.split('Bearer ')[1];
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-
     const allowedEmail = process.env.ALLOWED_USER_EMAIL!;
-    console.log(1, decodedToken.email !== allowedEmail)
+
     if (decodedToken.email !== allowedEmail) {
       res.status(403).json({ error: 'Forbidden: You are not allowed to use this API.' });
       return;
@@ -116,11 +117,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             mimeType: mimeType,
           },
         },
-        "Extract the winning numbers, date, and Sance number from this lottery ticket. Format the output as a JSON object with 'date' (date after string 'POCET SLOSOVANI'), 'sanceNumber' (number after string 'Sance' in a same row, like '089229' with no colons or semicolons), and 'winningNumbers' (an array of strings, where each string represents a row of numbers like '05 21 32 36 38 46 NT').",
+        prompt,
       ]);
       const responseText: string = result.response.text();
       try {
         const parsedData = extractJsonFromText(responseText);
+        console.log('Gemini extracted date:', parsedData.date);
         res.json(parsedData);
       } catch (jsonError) {
         console.error("Failed to parse Gemini response as JSON. Raw response (cleaned):", responseText);
