@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import * as admin from 'firebase-admin';
 import dotenv from 'dotenv';
+import { ensureEnvLoaded, ensureFirebaseInitialized, handleCors, authenticateRequest } from './utils';
 
 // Load environment variables
 if (!process.env.GEMINI_API_KEY) {
@@ -23,36 +24,16 @@ if (!admin.apps.length) {
   }
 }
 
+// Load environment variables and initialize Firebase
+ensureEnvLoaded();
+ensureFirebaseInitialized();
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // Use shared CORS handler
+  if (handleCors(req, res, ['GET', 'OPTIONS'])) return;
 
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  try {
-    const authorization = req.headers.authorization;
-    if (!authorization || !authorization.startsWith('Bearer ')) {
-      throw new Error('Unauthorized');
-    }
-    const idToken = authorization.split('Bearer ')[1];
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const allowedEmail = process.env.ALLOWED_USER_EMAIL!;
-
-    if (decodedToken.email !== allowedEmail) {
-      res.status(403).json({ error: 'Forbidden: You are not allowed to use this API.' });
-      return;
-    }
-  } catch (error) {
-    console.error('Authentication error:', error);
-    res.status(401).json({ error: 'Unauthorized: Invalid or missing token' });
-    return;
-  }
+  // Use shared authentication
+  if (!(await authenticateRequest(req, res))) return;
 
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });

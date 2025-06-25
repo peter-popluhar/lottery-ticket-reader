@@ -4,8 +4,8 @@ import { IncomingForm, File, Fields, Files } from 'formidable';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import * as admin from 'firebase-admin';
-
-const prompt = "Extract the winning numbers, date, and Šance number from this lottery ticket. Format the output as a JSON object with 'date' (date is after string 'POCET SLOSOVÁNÍ'), 'sanceNumber' (number after string 'Šance' in a same row, like '089229' with no colons or semicolons), and 'winningNumbers' (an array of strings, where each string represents a row of numbers like '05 21 32 36 38 46 NT'). If there is no lottery ticekt, dont return numbers used in this prompt as an examples."
+import { ensureEnvLoaded, ensureFirebaseInitialized, handleCors, authenticateRequest } from './utils';
+import { prompt } from './prompt';
 
 // Load environment variables
 if (!process.env.GEMINI_API_KEY) {
@@ -56,35 +56,11 @@ export const config = {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // Use shared CORS handler
+  if (handleCors(req, res, ['POST', 'OPTIONS'])) return;
 
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  try {
-    const authorization = req.headers.authorization;
-    if (!authorization || !authorization.startsWith('Bearer ')) {
-      throw new Error('Unauthorized');
-    }
-    const idToken = authorization.split('Bearer ')[1];
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const allowedEmail = process.env.ALLOWED_USER_EMAIL!;
-
-    if (decodedToken.email !== allowedEmail) {
-      res.status(403).json({ error: 'Forbidden: You are not allowed to use this API.' });
-      return;
-    }
-  } catch (error) {
-    console.error('Authentication error:', error);
-    res.status(401).json({ error: 'Unauthorized: Invalid or missing token' });
-    return;
-  }
+  // Use shared authentication
+  if (!(await authenticateRequest(req, res))) return;
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
