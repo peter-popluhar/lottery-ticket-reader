@@ -40,3 +40,19 @@
 .read-the-docs {
   color: #888;
 }
+
+.highlighted-number {
+  background: #ffe066;
+  color: #222;
+  border-radius: 4px;
+  padding: 0 4px;
+  font-weight: bold;
+}
+
+.draw-section {
+  margin: 1.5em 0;
+  padding: 1em;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+}

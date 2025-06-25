@@ -98,7 +98,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const responseText: string = result.response.text();
       try {
         const parsedData = extractJsonFromText(responseText);
-        console.log('Gemini extracted date:', parsedData.date);
         res.json(parsedData);
       } catch (jsonError) {
         console.error("Failed to parse Gemini response as JSON. Raw response (cleaned):", responseText);
