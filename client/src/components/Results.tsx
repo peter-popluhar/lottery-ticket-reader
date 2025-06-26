@@ -103,7 +103,7 @@ const Results: React.FC<ResultsProps> = ({
           <Alert severity="error" sx={{ mb: 2 }}>{winningError}</Alert>
         )}
         {winningNumbers && (
-          <Paper elevation={2} sx={{ p: 2, mt: 2, bgcolor: 'grey.50' }}>
+          <>
             <Typography variant="h6" sx={{ mb: 1 }}>
               Výsledky
             </Typography>
@@ -172,7 +172,7 @@ const Results: React.FC<ResultsProps> = ({
                 winningNumbers.addonNumbers.join('') === extractedData.sanceNumber
               )}
             </Typography>
-          </Paper>
+            </>
         )}
       </Paper>
     </Container>
