@@ -1,5 +1,9 @@
 import React from 'react';
 import type { User } from 'firebase/auth';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
 interface HeaderProps {
   user: User | null;
@@ -7,14 +11,18 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ user, onLogout }) => (
-  <header className="App-header">
-    <h1>Lottery Ticket Reader</h1>
-    {user && (
-      <button onClick={onLogout} className="sign-out-button">
-        Sign Out
-      </button>
-    )}
-  </header>
+  <AppBar position="static">
+    <Toolbar>
+      <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        Lottery Ticket Reader
+      </Typography>
+      {user && (
+        <Button color="inherit" onClick={onLogout}>
+          Sign Out
+        </Button>
+      )}
+    </Toolbar>
+  </AppBar>
 );
 
 export default Header; 

@@ -14,6 +14,11 @@ import { useUpload } from './hooks/useUpload';
 import { useCapture } from './hooks/useCapture';
 import { useRetake } from './hooks/useRetake';
 import { useFetchWinningNumbers } from './hooks/useFetchWinningNumbers';
+import Container from '@mui/material/Container';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 export type LotteryData = {
   date: string;
@@ -29,6 +34,8 @@ export type WinningNumbersData = {
   mainGame2Extra: number | null;
   addonNumbers: number[];
 };
+
+const theme = createTheme();
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -64,39 +71,52 @@ function App() {
   const combinedError = error || loginError || uploadError;
 
   if (authLoading) {
-    return <Loading message="Loading..." />;
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Loading message="Loading..." />
+      </ThemeProvider>
+    );
   }
 
   return (
-    <div className="App">
-      <Header user={user} onLogout={handleLogout} />
-      <main>
-        {user ? (
-          <>
-            {showCamera ? (
-              <CameraCapture onCapture={handleCapture} loading={apiLoading} />
-            ) : (
-              <>
-                {apiLoading && <Loading message="Extracting data..." />}
-                {extractedData && (
-                  <Results
-                    extractedData={extractedData}
-                    onFetchWinningNumbers={handleFetchWinningNumbers}
-                    winningLoading={winningLoading}
-                    winningError={winningError}
-                    winningNumbers={winningNumbers}
-                  />
-                )}
-                <button onClick={handleRetake} className="retake-button">Retake / New Ticket</button>
-              </>
-            )}
-            {combinedError && <ErrorMessage message={combinedError} />}
-          </>
-        ) : (
-          <Auth onLogin={handleLogin} />
-        )}
-      </main>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box minHeight="100vh" display="flex" flexDirection="column">
+        <Header user={user} onLogout={handleLogout} />
+        <Container maxWidth="md" sx={{ flex: 1, py: 4 }}>
+          {user ? (
+            <>
+              {showCamera ? (
+                <CameraCapture onCapture={handleCapture} loading={apiLoading} />
+              ) : (
+                <>
+                  {apiLoading && <Loading message="Extracting data..." />}
+                  {extractedData && (
+                    <Results
+                      extractedData={extractedData}
+                      onFetchWinningNumbers={handleFetchWinningNumbers}
+                      winningLoading={winningLoading}
+                      winningError={winningError}
+                      winningNumbers={winningNumbers}
+                    />
+                  )}
+                  <Box display="flex" justifyContent="center" mt={2}>
+                    <Button variant="outlined" color="primary" onClick={handleRetake}
+                      size="large">
+                      Retake / New Ticket
+                    </Button>
+                  </Box>
+                </>
+              )}
+              {combinedError && <ErrorMessage message={combinedError} />}
+            </>
+          ) : (
+            <Auth onLogin={handleLogin} />
+          )}
+        </Container>
+      </Box>
+    </ThemeProvider>
   );
 }
 

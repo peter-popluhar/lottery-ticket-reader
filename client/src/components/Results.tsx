@@ -1,5 +1,11 @@
 import React from 'react';
 import type { LotteryData, WinningNumbersData } from '../App';
+import Container from '@mui/material/Container';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
 
 interface ResultsProps {
   extractedData: LotteryData;
@@ -8,7 +14,6 @@ interface ResultsProps {
   winningError: string | null;
   winningNumbers: WinningNumbersData | null;
 }
-
 
 // Helper to format date as DD.MM.YYYY
 function formatDateDDMMYYYY(dateStr: string): string {
@@ -32,7 +37,22 @@ function formatDateDDMMYYYY(dateStr: string): string {
 }
 
 const highlightNumber = (num: string | number, highlight: boolean) => (
-  <span className={highlight ? 'highlighted-number' : undefined}>{num}</span>
+  <Box
+    component="span"
+    sx={{
+      px: 0.7,
+      py: 0.2,
+      borderRadius: 1,
+      bgcolor: highlight ? 'primary.main' : 'transparent',
+      color: highlight ? 'primary.contrastText' : 'inherit',
+      fontWeight: highlight ? 700 : 400,
+      fontSize: '1.1rem',
+      transition: 'background 0.2s',
+      display: 'inline-block',
+    }}
+  >
+    {num}
+  </Box>
 );
 
 const Results: React.FC<ResultsProps> = ({
@@ -48,88 +68,114 @@ const Results: React.FC<ResultsProps> = ({
   );
 
   return (
-    <div className="results-container">
-      <h2>Vsazená čísla:</h2>
-      <p><strong>Datum losovani:</strong> {extractedData.date}</p>
-      <div>
-        {parsedRows.map((rowArr, rowIdx) => (
-          <p key={rowIdx}>
-            {rowArr.map((num, idx) => (
-              <React.Fragment key={idx}>
-                {highlightNumber(num, false)}{' '}
-              </React.Fragment>
-            ))}
-          </p>
-        ))}
-      </div>
-      <p><strong>Šance:</strong> {extractedData.sanceNumber}</p>
-      <button onClick={onFetchWinningNumbers} className="fetch-winning-button" disabled={winningLoading}>
-        {winningLoading ? 'Loading Winning Numbers...' : 'Show Official Winning Numbers'}
-      </button>
-      {winningError && <p className="error-message">{winningError}</p>}
-      {winningNumbers && (
-        <div className="winning-numbers-container">
-          <h2>Výsledky</h2>
-          <p><strong>Výsledky pro datum:</strong> {formatDateDDMMYYYY(winningNumbers.drawDate)}</p>
-          {/* 1. TAH */}
-          <div className="draw-section">
-            <h3>1. TAH</h3>
-            <p>
-              <strong>Výherní čísla:</strong> {winningNumbers.mainGame1Numbers.slice().sort((a, b) => a - b).join(' ')}
-              {winningNumbers.mainGame1Extra !== null && (
-                <span> | <strong>{winningNumbers.mainGame1Extra}</strong></span>
-              )}
-            </p>
-            <div>
-              {parsedRows.map((rowArr, rowIdx) => (
-                <p key={rowIdx}>
-                  {rowArr.map((num, idx) => {
-                    const mainNumbers = winningNumbers.mainGame1Numbers;
-                    const extra = winningNumbers.mainGame1Extra;
-                    const isMatch = mainNumbers.includes(Number(num)) || (extra !== null && Number(num) === extra);
-                    return (
-                      <React.Fragment key={idx}>
-                        {highlightNumber(num, isMatch)}{' '}
-                      </React.Fragment>
-                    );
-                  })}
-                </p>
+    <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
+      <Paper elevation={3} sx={{ p: 3 }}>
+        <Typography variant="h5" component="h2" sx={{ mb: 2 }}>
+          Vsazená čísla:
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 1 }}>
+          <strong>Datum losovani:</strong> {extractedData.date}
+        </Typography>
+        <Box sx={{ mb: 2 }}>
+          {parsedRows.map((rowArr, rowIdx) => (
+            <Box key={rowIdx} sx={{ mb: 0.5 }}>
+              {rowArr.map((num, idx) => (
+                <React.Fragment key={idx}>
+                  {highlightNumber(num, false)}{' '}
+                </React.Fragment>
               ))}
-            </div>
-          </div>
-          {/* 2. TAH */}
-          <div className="draw-section">
-            <h3>2. TAH</h3>
-            <p>
-              <strong>Výherní čísla:</strong> {winningNumbers.mainGame2Numbers.slice().sort((a, b) => a - b).join(' ')}
-              {winningNumbers.mainGame2Extra !== null && (
-                <span> | <strong>{winningNumbers.mainGame2Extra}</strong></span>
+            </Box>
+          ))}
+        </Box>
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          <strong>Šance:</strong> {extractedData.sanceNumber}
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={onFetchWinningNumbers}
+          disabled={winningLoading}
+          sx={{ mb: 2 }}
+        >
+          {winningLoading ? 'Loading Winning Numbers...' : 'Show Official Winning Numbers'}
+        </Button>
+        {winningError && (
+          <Alert severity="error" sx={{ mb: 2 }}>{winningError}</Alert>
+        )}
+        {winningNumbers && (
+          <Paper elevation={2} sx={{ p: 2, mt: 2, bgcolor: 'grey.50' }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Výsledky
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              <strong>Výsledky pro datum:</strong> {formatDateDDMMYYYY(winningNumbers.drawDate)}
+            </Typography>
+            {/* 1. TAH */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                1. TAH
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                <strong>Výherní čísla:</strong> {winningNumbers.mainGame1Numbers.slice().sort((a, b) => a - b).join(' ')}
+                {winningNumbers.mainGame1Extra !== null && (
+                  <span> | <strong>{winningNumbers.mainGame1Extra}</strong></span>
+                )}
+              </Typography>
+              <Box>
+                {parsedRows.map((rowArr, rowIdx) => (
+                  <Box key={rowIdx} sx={{ mb: 0.5 }}>
+                    {rowArr.map((num, idx) => {
+                      const mainNumbers = winningNumbers.mainGame1Numbers;
+                      const extra = winningNumbers.mainGame1Extra;
+                      const isMatch = mainNumbers.includes(Number(num)) || (extra !== null && Number(num) === extra);
+                      return (
+                        <React.Fragment key={idx}>
+                          {highlightNumber(num, isMatch)}{' '}
+                        </React.Fragment>
+                      );
+                    })}
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+            {/* 2. TAH */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                2. TAH
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                <strong>Výherní čísla:</strong> {winningNumbers.mainGame2Numbers.slice().sort((a, b) => a - b).join(' ')}
+                {winningNumbers.mainGame2Extra !== null && (
+                  <span> | <strong>{winningNumbers.mainGame2Extra}</strong></span>
+                )}
+              </Typography>
+              <Box>
+                {parsedRows.map((rowArr, rowIdx) => (
+                  <Box key={rowIdx} sx={{ mb: 0.5 }}>
+                    {rowArr.map((num, idx) => {
+                      const mainNumbers = winningNumbers.mainGame2Numbers;
+                      const extra = winningNumbers.mainGame2Extra;
+                      const isMatch = mainNumbers.includes(Number(num)) || (extra !== null && Number(num) === extra);
+                      return (
+                        <React.Fragment key={idx}>
+                          {highlightNumber(num, isMatch)}{' '}
+                        </React.Fragment>
+                      );
+                    })}
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+            <Typography variant="body1">
+              <strong>Šance: </strong>{highlightNumber(
+                winningNumbers.addonNumbers.join(''),
+                winningNumbers.addonNumbers.join('') === extractedData.sanceNumber
               )}
-            </p>
-            <div>
-              {parsedRows.map((rowArr, rowIdx) => (
-                <p key={rowIdx}>
-                  {rowArr.map((num, idx) => {
-                    const mainNumbers = winningNumbers.mainGame2Numbers;
-                    const extra = winningNumbers.mainGame2Extra;
-                    const isMatch = mainNumbers.includes(Number(num)) || (extra !== null && Number(num) === extra);
-                    return (
-                      <React.Fragment key={idx}>
-                        {highlightNumber(num, isMatch)}{' '}
-                      </React.Fragment>
-                    );
-                  })}
-                </p>
-              ))}
-            </div>
-          </div>
-          <p><strong>Šance: </strong>{highlightNumber(
-            winningNumbers.addonNumbers.join(''),
-            winningNumbers.addonNumbers.join('') === extractedData.sanceNumber
-          )}</p>
-        </div>
-      )}
-    </div>
+            </Typography>
+          </Paper>
+        )}
+      </Paper>
+    </Container>
   );
 };
 
